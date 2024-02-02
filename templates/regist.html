@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TexTTune</title>
+    <link rel="icon" href="{{url_for('static',filename='css/logo.png')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/Lcss.css')}}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-app.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+           https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-auth.js"></script>
+    <script>
+        // Set up a JavaScript variable with the Flask-rendered URL
+        var testTemplateURL = "{{ url_for('test_template_route') }}";
+    </script>
+
+    <script type="text/javascript" src="{{url_for('static',filename='script/firebase.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static',filename='script/signup.js')}}"></script>
+
+
+</head>
+
+<body>
+
+    <div class="register">
+        <form id="form" action="#" >
+            <img src="{{url_for('static',filename='css/llogo.png')}}" style="width:50%" >
+            <h2>Register</h1>
+                <p id="error"></p>
+                <div class="inputs">
+                    Email
+                    <input type="email" id="email" placeholder="Email" required="required" />
+                </div>
+                <div class="inputs">
+                    Password
+                    <input type="password" id="password" placeholder="Password" required="required" />
+                </div>
+                <div class="inputs">
+                    Confirm Password
+                    <input type="password" id="cpassword" placeholder="Enter Password Again" required="required" />
+                </div>
+                <button type="submit" class="btn">Create Account</button>
+                <div class="reg">
+                    Already have an account? <a href='/'>Login</a>
+                </div>
+            </form>
+    </div>
+
+
+
+
+</body>
+
+</html>

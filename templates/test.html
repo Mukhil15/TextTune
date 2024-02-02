@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextTune</title>
+    <link rel="icon" href="{{url_for('static',filename='css/logo.png')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/test.css')}}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-database.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+        https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase-auth.js"></script>
+    <script>
+        var loginurl = "{{ url_for('login_page') }}";
+    </script>
+    <script type="text/javascript" src="{{url_for('static',filename='script/firebase.js')}}"></script>
+</head>
+
+<body>
+    <button class="logout" onclick="logout()">Logout</button>
+    <div class="body">
+        <div class="main">
+            <h2>Write a Text with us in your Tone</h2>
+            <div class="menu">
+                <a href="/test"><button class="active">Speech to Text</button></a>
+                <a href="/convert"><button class="normal">Audio to Text</button></a>
+                <a href="/videot"><button class="normal">Video to Text</button></a>
+                <a href="/translate"><button class="normal">Translation</button></a>
+            </div>
+            
+  <div class="recentsB" id="recentsB">
+    <div class="recentCont">
+<img src="{{url_for('static',filename='css/tlogo.png')}}" style="width:60%; margin:10px 0px 0px 50px">
+
+      <div class="recentsBh">
+
+        <h2>Recents</h2>
+      </div>
+     <center><div id="recents">
+      </div></center> 
+      <button id="saveBtn">Save</button>
+      </div>
+
+  </div>
+            <div class="mic-div">
+                <button id="copyButton" class="cpybtn">
+                    <i class="fa fa-clipboard" aria-hidden="true"> </i>
+                    <p>Copy</p>
+                </button>
+                <button id="clearButton">
+                    <i class="fa fa-eraser" aria-hidden="true"> </i>
+                    <p>Clear</p>
+                </button>
+                <button onclick="downloadText()">
+                    <i class="fa fa-download" aria-hidden="true"> </i>
+                    <p>Download</p>
+                </button>
+               
+                <div class="divtext" id="speechToText" contenteditable="true">
+                </div>
+                <div class="mbutton">
+                    <div class="mic-button" id="micButton">
+                        <div class="wave-bars">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                        <div class="wave"></div>
+                        <i class="fas fa-microphone fa-2x mic-icon"></i>
+                        <div class="wave-bars" id="right">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+
+        <div>
+            <i class="fa fa-comments" id="showChat" aria-hidden="true"></i>
+            <div id="chat-container" style="display: none;">
+                <h4 id="hide"><i class="fa fa-comments" aria-hidden="true"> </i></h4>
+                <div id="chat-wrapper">
+                    <div id="chat-log"></div>
+
+                </div>
+                <div class="uinputs">
+                    <input type="text" id="user-input" />
+                    <button id="send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+
+
+
+</body>
+
+
+<script>
+function downloadText() {
+  var textToDownload = document.querySelector('.divtext').textContent;
+
+  // Ask the user for confirmation
+  var confirmDownload = confirm("Do you want to download this file?");
+  
+  if (confirmDownload) {
+    // Prompt the user for a filename
+    var fileName = prompt("Enter a filename:", "CodeRed Transcript- " + new Date().toLocaleString() + ".txt");
+    
+    if (fileName) {
+      fileName = fileName.trim();
+      if (fileName === "") {
+        alert("Filename cannot be empty. File not downloaded.");
+      } else {
+        // Create a Blob and initiate download
+        var blob = new Blob([textToDownload], { type: 'text/plain' });
+        var a = document.createElement('a');
+        a.download = fileName + ".txt";
+        a.href = URL.createObjectURL(blob);
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } else {
+      alert("File download canceled.");
+    }
+  } else {
+    alert("File download canceled.");
+  }
+}
+
+
+    function showRecents() {
+        const recentsDiv = document.querySelector('.recents');
+        if (recentsDiv.style.display === 'none' || recentsDiv.style.display === '') {
+            recentsDiv.style.display = 'block';
+        } else {
+            recentsDiv.style.display = 'none';
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const chatLog = document.getElementById("chat-log");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+        const chatContainer = document.getElementById("chat-container");
+        const showchat = document.getElementById("showChat");
+        const hideChat = document.getElementById("hide");
+
+        const userName = "Guest";
+
+        hideChat.addEventListener("click", function hideDisplay() {
+            chatContainer.style.display = "none";
+        });
+
+        showchat.addEventListener("click", function display() {
+            chatContainer.style.display = "flex";
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!chatContainer.contains(event.target) && event.target !== showchat) {
+                chatContainer.style.display = "none";
+            }
+        });
+
+        const responses = {
+            "hello": "Hi there,! How can I assist you?",
+            "hi": "Hi there, ! How can I assist you?",
+            "how are you": "I'm just a bot, but I'm here to help!",
+            "goodbye": "Goodbye! Have a great day!",
+            "help": "Sure, I'm here to help. What do you need assistance with?",
+            "time": new Date().toLocaleTimeString(),
+            "name": "I'm just a chatbot, so I don't have a personal name. You can call me ChatBot!",
+            "thanks": "You're welcome! If you have any more questions, feel free to ask.",
+            "languages": "We support a wide range of languages for translation. You can select your target language from the dropdown menu on our interface, and we will translate the content into that language.",
+            "model": "We use Google Translate for translation. ",
+            "other formats": "Yes,you can upload the audio files in other formats such as MP3, WAV, FLAC, and M4A",
+            "how long": "The processing time depends on the duration and complexity of the audio file.Typically, it takes only a few moments to process a short audio clip, but longer recordings may take the same time.",
+            "copy": "Yes, you can easily copy the generated translation to your clipboard using your browser's copy function.",
+            "download": "Yes, you can easily download the generated transcriptions and translation ",
+            "use cases": "Our tool is versatile and can be used for a variety of purposes. Common use cases include transcribing interviews, translating meetings and more",
+            "cost": "No,our service is free to use",
+            "limit": "We do not impose a strict limit on the number of translations you can perform. However, we encourage responsible usage to ensure fair access for all users.",
+            "what is the accuracy": "Our translation accuracy is generally high, but it may not capture nuances and context in every instance. We recommend reviewing and editing the translations for critical applications.",
+            "special features": "Yes, our tool offers some unique features that distinguish it from others: 1) Multi-language Support: We support translation to a wide range of languages, making it versatile for users from various linguistic backgrounds. 2)Batch Processing: You can upload multiple audio files at once for simultaneous processing, saving you time. 3)Speech Recognition Accuracy: Our speech recognition system aims for high accuracy, even in challenging conditions. 3)Ease of Use: Our user-friendly interface makes it simple to upload and process audio files.",
+            "live transcription": "Yes, you can use this tool for live transcription and translation during meetings or events. Our real-time transcription feature allows you to connect to a live audio source, and we will provide you with simultaneous transcriptions and translations as the audio is processed. ",
+            "delay": "There may be a slight delay due to processing, but we aim to provide real-time or near-real-time transcriptions and translations for a seamless experience.",
+            "Mp4": "You can upload an MP4 video file in the same way as audio files. Simply select the MP4 file from your device, and our tool will process it for transcription",
+            "background noise": "To improve accuracy, it's advisable to use videos with clear audio and minimal background noise. You can also consider noise reduction techniques during post-processing.",
+            "limit,size": "The upload file size limit may vary depending on the hosting environment. Please check the interface for specific file size limits.",
+            default: "I'm sorry, I don't have a response for that. Could you please rephrase your question?"
+        };
+
+        sendBtn.addEventListener("click", sendMessage);
+
+        userInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        function respondToMessage(userMessage) {
+            const keywords = Object.keys(responses);
+            for (const i of keywords) {
+                if (userMessage.includes(i)) {
+                    const response = responses[i];
+
+
+                    const randomDelayInSeconds = Math.floor(Math.random() * 5) + 1;
+
+                    const loadingMessage = document.createElement("div");
+                    loadingMessage.classList.add("message", "bot");
+                    loadingMessage.innerHTML = "Bot: Typing... <span class='loading'></span>";
+                    chatLog.appendChild(loadingMessage);
+
+
+                    setTimeout(function () {
+
+                        const loadingSpan = loadingMessage.querySelector('.loading');
+                        loadingSpan.textContent = '';
+                        loadingMessage.innerHTML = "Bot: " + response;
+                    }, randomDelayInSeconds * 1000);
+
+                    return;
+                }
+            }
+
+
+            displayMessage("Bot: " + responses.default, "bot");
+        }
+
+        function sendMessage() {
+            const userMessage = userInput.value.toLowerCase();
+
+            if (userMessage !== "") {
+                displayMessage(userName + ": " + userMessage, "user");
+                respondToMessage(userMessage);
+                userInput.value = "";
+            }
+        }
+
+        function displayMessage(message, sender) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", sender);
+            messageElement.textContent = message;
+            messageElement.style.marginBottom = "10px";
+            chatLog.appendChild(messageElement);
+        }
+
+        //recents
+        function isConvertedTextEmpty() {
+            const convertedTextDiv = document.querySelector("#speechToText");
+            return !convertedTextDiv.textContent.trim();
+        }
+
+        // Function to display a message when the converted-text is empty
+        function displayEmptyTextMessage() {
+            const convertedTextDiv = document.querySelector("#speechToText");
+            convertedTextDiv.innerText = "Field is empty. Nothing to save.";
+        }
+
+        let recentDiv = document.querySelector("#recents");
+
+        function updateRecents() {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                const userUid = user.uid;
+
+                const dbRef = firebase.database().ref(`/${userUid}/stt/`);
+                dbRef.once("value").then((snapshot) => {
+          const recentsDiv = document.querySelector("#recents");
+          recentsDiv.innerHTML = "";
+
+          snapshot.forEach((dateSnapshot) => {
+            const date = dateSnapshot.key;
+            dateSnapshot.forEach((timeSnapshot) => {
+              const time = timeSnapshot.key;
+              const text = timeSnapshot.val();
+
+              const p = document.createElement("p");
+              p.classList.add("filetxt");
+              p.innerText = `${text.substring(0, 14)}${text.length > 14 ? '...' : ''} \n ${date} ${time}`;
+
+
+              // Clicking on a recent file will load its text into the #converted-text element
+              p.addEventListener("click", () => {
+                document.querySelector("#speechToText").innerText = text;
+              });
+
+              const deleteButton = document.createElement("button");
+              deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+              deleteButton.classList.add("btnicon");
+
+              // Clicking the delete button will remove the recent file from Firebase
+              deleteButton.addEventListener("click", () => {
+                dbRef.child(date).child(time).remove().then(() => {
+                  updateRecents();
+                }).catch((error) => {
+                  console.error("Error deleting entry:", error);
+                });
+              });
+
+              p.appendChild(deleteButton);
+              recentsDiv.appendChild(p);
+            });
+          });
+        }).catch((error) => {
+          console.error(error);
+        });
+      } else {
+        console.error("User not authenticated.");
+      }
+    }
+
+    document.querySelector("#saveBtn").onclick = () => {
+      if (isConvertedTextEmpty()) {
+        displayEmptyTextMessage();
+        return;
+      }
+
+      const currentdate = new Date();
+      const date = `${currentdate.getDate()}-${currentdate.getMonth() + 1}-${currentdate.getFullYear()}`;
+      const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true, // This ensures 12-hour time format with AM/PM
+      };
+      const time = currentdate.toLocaleTimeString('en-US', timeOptions);
+
+      const user = firebase.auth().currentUser;
+      if (user) {
+        const dbRef = firebase.database().ref(`/${user.uid}/stt/${date}/${time}`);
+
+        // Set the data in the database
+        dbRef.set(document.querySelector("#speechToText").textContent)
+          .then(() => {
+            // After setting data, update recents
+            updateRecents();
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      } else {
+        // Handle the case when the user is not authenticated
+        console.error("User not authenticated.");
+      }
+    };
+
+        // Check if there's an authenticated user and call updateRecents
+        firebase.auth().onAuthStateChanged(function (user) {
+            if (user) {
+                updateRecents();
+            }
+        });
+
+
+    });
+</script>
+
+
+</html>
+
+<script type="text/javascript" src="{{url_for('static',filename='script/test.js')}}"></script>
+<!--  "hello": "Hi there, " + userName + "! How can I assist you?",
+            "hi": "Hi there, " + userName + "! How can I assist you?",
+            "how are you": "I'm just a bot, but I'm here to help!",
+            "goodbye": "Goodbye! Have a great day!",
+            "help": "Sure, I'm here to help. What do you need assistance with?",
+            "time": new Date().toLocaleTimeString(),
+            "name": "I'm just a chatbot, so I don't have a personal name. You can call me ChatBot!",
+            "thanks": "You're welcome! If you have any more questions, feel free to ask.",
+            default: "I'm sorry, I don't have a response for that. Could you please rephrase your question?"-->
